@@ -16,14 +16,12 @@ Up3, Uu3, Upt3
 
 1. Each option must have a mnemonic:
 
-Example:
 Uu1 v Un1 v Ud1 v Uo1
 Uc2 v Uo2 v Up2 v Uy2
 Up3 v Uu3 v Upt3
 
 2. An option cannot have more than one mnemonic:
 
-Example:
 Uu1 -> ¬Un1 ∧ ¬Ud1 ∧ ¬Uo1
 Un1 -> ¬Uu1 ∧ ¬Ud1 ∧ ¬Uo1
 Ud1 -> ¬Uu1 ∧ ¬Un1 ∧ ¬Uo1
@@ -40,9 +38,9 @@ Ut3 -> ¬Up3 ∧ ¬Uu3
 
 3. A given character cannot be a mnemonic of two different options:
 
-Example:
 Uo1 -> ¬Uo2 ∧ ¬Uu3
 Up2 -> ¬Up3
+
 */
 
 ///////////////////////////////// IMPLEMENTATION ////////////////////////////////
