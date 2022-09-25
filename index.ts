@@ -5,14 +5,14 @@ import { groupBy } from "./utils";
 /////////////////////////// OPTIONS AND FORMALIZATION ///////////////////////////
 
 // Menu options
-const OPTIONS = ["cut", "copy", "put"];
+const OPTIONS = ["undo", "copy", "put"];
 
 /* FORMALIZATION
 
 Let's consider options "undo", "copy", "put" which can be written as:
 Uu1, Un1, Ud1, Uo1
 Uc2, Uo2, Up2, Uy2
-Up3, Uu3, Upt3
+Up3, Uu3, Ut3
 
 1. Each option must have a mnemonic:
 
@@ -38,8 +38,12 @@ Ut3 -> ¬Up3 ∧ ¬Uu3
 
 3. A given character cannot be a mnemonic of two different options:
 
-Uo1 -> ¬Uo2 ∧ ¬Uu3
+Uu1 -> ¬Uu2 ∧ ¬Uu3
+Uu2 -> ¬Uu1 ∧ ¬Uu3
+Uu3 -> ¬Uu1 ∧ ¬Uu2
+
 Up2 -> ¬Up3
+Up3 -> ¬Up2
 
 */
 
@@ -134,7 +138,7 @@ function addCharacterConstraint(options: Mnemonic[][], solver: Solver<"main">) {
   //  { character: 'c', position: { i: 2, j: 0 }, value: BoolImpl { ptr: 14261724, ctx: [Object] } },
   //  { character: 't', position: { i: 0, j: 2 }, value: BoolImpl { ptr: 14261604, ctx: [Object] } },
   //  { character: 't', position: { i: 2, j: 3 },  value: BoolImpl { ptr: 14261796, ctx: [Object] } },
-  //  { character: 't', position: { i: 3, j: 4 }, value: BoolImpl { ptr: 14261844, ctx: [Object] }
+  //  { character: 't', position: { i: 3, j: 4 }, value: BoolImpl { ptr: 14261844, ctx: [Object] } }
   // }
   let arrayChar: (Mnemonic | null)[] = options.flat();
   const repeatedChars = new Set();
