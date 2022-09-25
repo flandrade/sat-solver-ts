@@ -5,7 +5,7 @@ import { groupBy } from "./utils";
 /////////////////////////// OPTIONS AND FORMALIZATION ///////////////////////////
 
 // Menu options
-const OPTIONS = ["cut", "copy", "cost"];
+const OPTIONS = ["cut", "copy", "put"];
 
 /* FORMALIZATION
 
