@@ -2,8 +2,20 @@ import { BoolCreation, init } from "z3-solver";
 import type { Solver, Bool as BoolZ3 } from "z3-solver";
 import { groupBy } from "./utils";
 
+/////////////////////////// OPTIONS AND FORMALIZATION ///////////////////////////
+
 // Menu options
-const OPTIONS = ["cut", "copy", "cost", "paste"];
+const OPTIONS = ["cut", "copy", "cost"];
+
+/* FORMALIZATION
+
+1. Each option must have a mnemonic.
+2. An option cannot have more than one mnemonic.
+3. A given character cannot be a mnemonic of two different options.
+
+*/
+
+///////////////////////////////// IMPLEMENTATION ////////////////////////////////
 
 interface Mnemonic {
   character: string;
@@ -155,7 +167,6 @@ function addCharacterConstraint(options: Mnemonic[][], solver: Solver<"main">) {
 
 /**
  * Solve using Z3 API
- *
  */
 (async () => {
   let { Context, em } = await init();
