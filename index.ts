@@ -9,10 +9,40 @@ const OPTIONS = ["cut", "copy", "cost"];
 
 /* FORMALIZATION
 
-1. Each option must have a mnemonic.
-2. An option cannot have more than one mnemonic.
-3. A given character cannot be a mnemonic of two different options.
+Let's consider options "undo", "copy", "put" which can be written as:
+Uu1, Un1, Ud1, Uo1
+Uc2, Uo2, Up2, Uy2
+Up3, Uu3, Upt3
 
+1. Each option must have a mnemonic:
+
+Example:
+Uu1 v Un1 v Ud1 v Uo1
+Uc2 v Uo2 v Up2 v Uy2
+Up3 v Uu3 v Upt3
+
+2. An option cannot have more than one mnemonic:
+
+Example:
+Uu1 -> ¬Un1 ∧ ¬Ud1 ∧ ¬Uo1
+Un1 -> ¬Uu1 ∧ ¬Ud1 ∧ ¬Uo1
+Ud1 -> ¬Uu1 ∧ ¬Un1 ∧ ¬Uo1
+Uo1 -> ¬Uu1 ∧ ¬Un1 ∧ ¬Ud1
+
+Uc2 -> ¬Uo2 ∧ ¬Up2 ∧ ¬Uy2
+Uo2 -> ¬Uc2 ∧ ¬Uo2 ∧ ¬Uy2
+Up2 -> ¬Uc2 ∧ ¬Uo2 ∧ ¬Uy2
+Uy2 -> ¬Uc2 ∧ ¬Up2 ∧ ¬Up2
+
+Up3 -> ¬Uu3 ∧ ¬Ut3
+Uu3 -> ¬Up3 ∧ ¬Ut3
+Ut3 -> ¬Up3 ∧ ¬Uu3
+
+3. A given character cannot be a mnemonic of two different options:
+
+Example:
+Uo1 -> ¬Uo2 ∧ ¬Uu3
+Up2 -> ¬Up3
 */
 
 ///////////////////////////////// IMPLEMENTATION ////////////////////////////////
@@ -59,7 +89,7 @@ function addConstraints(
 ): Solver<"main"> {
   // Each option must have a mnemonic
   // Example:
-  // Uu0 v Un0 Ud0 Uo0
+  // Uu0 v Un0 v Ud0 v Uo0
   options.forEach((option: Mnemonic[]) => {
     const arrayOption = new solver.ctx.AstVector<BoolZ3>();
     option.forEach((nm) => arrayOption.push(nm.value));
@@ -67,10 +97,10 @@ function addConstraints(
   });
 
   // An option cannot have more than one mnemonic
-  // Uu0 -> ¬Un0 ^ ¬Ud0 ^ ¬Uno0
-  // Un0 -> ¬Uu0 ^ ¬Ud0 ^ ¬Uno0
-  // Ud0 -> ¬Uu0 ^ ¬Un0 ^ ¬Uno0
-  // Uo0 -> ¬Uu0 ^ ¬Un0 ^ ¬Und0
+  // Uu0 -> ¬Un0 ^ ¬Ud0 ^ ¬Uo0
+  // Un0 -> ¬Uu0 ^ ¬Ud0 ^ ¬Uo0
+  // Ud0 -> ¬Uu0 ^ ¬Un0 ^ ¬Uo0
+  // Uo0 -> ¬Uu0 ^ ¬Un0 ^ ¬Ud0
   options.forEach((option: Mnemonic[]) => {
     option.forEach((_, index) => {
       const first = option[index];
