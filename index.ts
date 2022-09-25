@@ -2,7 +2,7 @@ import { BoolCreation, init } from "z3-solver";
 import type { Solver, Arith, Bool as BoolZ3 } from "z3-solver";
 
 // Menu options
-const OPTIONS = ["undo", "copy"];
+const OPTIONS = ["cut", "copy", "cost", "sssst"];
 
 /**
  * Transform an option from the menu into a vector of boolean constants [Uc,i...].
@@ -38,28 +38,20 @@ function addConstraints(
 ): Solver<"main"> {
   // each option must have a mnemonic
   options.forEach((option: BoolZ3<"main">[]) => {
-    solver.add(
-      option.reduce((previous, current) => {
-        return previous.or(current);
-      })
-    );
+    const arrayOption = new solver.ctx.AstVector<BoolZ3>();
+    option.forEach((nm) => arrayOption.push(nm));
+    solver.add(solver.ctx.Or(arrayOption));
   });
 
   // An option cannot have more than one mnemonic
   options.forEach((option: BoolZ3<"main">[]) => {
     const [first, ...tail] = option;
-    solver.add(
-      solver.ctx.Implies(
-        first,
-        tail.reduce((previous, current) => {
-          return previous.and(current.not());
-        })
-      )
-    );
+    const arrayOption = new solver.ctx.AstVector<BoolZ3>();
+    tail.forEach((nm) => arrayOption.push(solver.ctx.Not(nm)));
+    solver.add(solver.ctx.Implies(first, solver.ctx.And(arrayOption)));
   });
 
   // A given letter cannot be a mnemonic of two different options
-
   return solver;
 }
 
