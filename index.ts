@@ -1,8 +1,9 @@
 import { BoolCreation, init } from "z3-solver";
-import type { Solver, Arith, Bool as BoolZ3 } from "z3-solver";
+import type { Solver, Bool as BoolZ3 } from "z3-solver";
+import { groupBy } from "./utils";
 
 // Menu options
-const OPTIONS = ["cut", "copy", "cost", "sssst"];
+const OPTIONS = ["cut", "copy", "cost", "paste"];
 
 interface Mnemonic {
   character: string;
@@ -15,7 +16,7 @@ interface Mnemonic {
  *
  * @param options - The list of options. Example: ["undo", "copy"]
  * @param Bool - The Bool structure from Z3
- * @returns array of boolean constants from Z3. Example: [[Uu1, Un1, Ud1, Uo1],[Uc2, Uo2, Up2, Uy2]]
+ * @returns array of boolean constants from Z3. Example: [[Uu0, Un0, Ud0, Uo0], [Uc1, Uo1, Up1, Uy1]]
  *
  */
 function parseOptions(
@@ -33,9 +34,9 @@ function parseOptions(
 }
 
 /**
- * Add mnemonic keyboard constraint
+ * Add mnemonic keyboard constraint.
  *
- * @param options - The array of boolean constants from Z3. Example: [[Uu1, Un1, Ud1, Uo1],[Uc2, Uo2, Up2, Uy2]]
+ * @param options - The array of boolean constants from Z3. Example: [[Uu0, Un0, Ud0, Uo0], [Uc1, Uo1, Up1, Uy1]]
  * @param solver - The solver structure from Z3
  * @returns The solver structure from Z3
  *
@@ -44,7 +45,9 @@ function addConstraints(
   options: Mnemonic[][],
   solver: Solver<"main">
 ): Solver<"main"> {
-  // each option must have a mnemonic
+  // Each option must have a mnemonic
+  // Example:
+  // Uu0 v Un0 Ud0 Uo0
   options.forEach((option: Mnemonic[]) => {
     const arrayOption = new solver.ctx.AstVector<BoolZ3>();
     option.forEach((nm) => arrayOption.push(nm.value));
@@ -52,6 +55,10 @@ function addConstraints(
   });
 
   // An option cannot have more than one mnemonic
+  // Uu0 -> ¬Un0 ^ ¬Ud0 ^ ¬Uno0
+  // Un0 -> ¬Uu0 ^ ¬Ud0 ^ ¬Uno0
+  // Ud0 -> ¬Uu0 ^ ¬Un0 ^ ¬Uno0
+  // Uo0 -> ¬Uu0 ^ ¬Un0 ^ ¬Und0
   options.forEach((option: Mnemonic[]) => {
     option.forEach((_, index) => {
       const first = option[index];
@@ -69,18 +76,87 @@ function addConstraints(
 }
 
 /*
- * Add character constraint: Add mnemonic keyboard constraint: A given character cannot be a mnemonic of two different options
+ * Add character constraint: Add mnemonic keyboard constraint: A given character cannot be a mnemonic of
+ * two different options.
  *
  * @param optionsString - The array of options as strings
- * @param options - The array of boolean constants.. Example: [[Uu1, Un1, Ud1, Uo1],[Uc2, Uo2, Up2, Uy2]]
+ * @param options - The array of boolean constants. Example: [[Uu0, Un0, Ud0, Uo0], [Uc1, Uo1, Up1, Uy1]]
  * @param solver - The solver structure from Z3
  * @returns The solver structure from Z3
  *
  */
 function addCharacterConstraint(options: Mnemonic[][], solver: Solver<"main">) {
-  //return solver;
+  // Search for repeated chars in order to defined the prepositions.
+  // Example:
+  // Set(13) {
+  //  { character: 'c', position: { i: 0, j: 0 }, value: BoolImpl { ptr: 14261556, ctx: [Object] } },
+  //  { character: 'c', position: { i: 1, j: 0 }, value: BoolImpl { ptr: 14261628, ctx: [Object] } },
+  //  { character: 'c', position: { i: 2, j: 0 }, value: BoolImpl { ptr: 14261724, ctx: [Object] } },
+  //  { character: 't', position: { i: 0, j: 2 }, value: BoolImpl { ptr: 14261604, ctx: [Object] } },
+  //  { character: 't', position: { i: 2, j: 3 },  value: BoolImpl { ptr: 14261796, ctx: [Object] } },
+  //  { character: 't', position: { i: 3, j: 4 }, value: BoolImpl { ptr: 14261844, ctx: [Object] }
+  // }
+  let arrayChar: (Mnemonic | null)[] = options.flat();
+  const repeatedChars = new Set();
+  for (let i = 0; i < arrayChar.length - 1; i++) {
+    const currentValue = arrayChar[i];
+    if (currentValue !== null) {
+      for (let j = i + 1; j < arrayChar.length; j++) {
+        if (
+          arrayChar[j] !== null &&
+          currentValue.character === arrayChar[j]?.character
+        ) {
+          repeatedChars.add(currentValue);
+          repeatedChars.add(arrayChar[j]);
+          arrayChar[j] = null;
+        }
+      }
+    }
+  }
+
+  // Group repeated constants by character
+  // Example:
+  // {
+  //  c: [
+  //    { character: 'c', position: { i: 0, j: 0 }, value: [BoolImpl] },
+  //    { character: 'c', position: { i: 1, j: 0 }, value: [BoolImpl] },
+  //    { character: 'c', position: { i: 2, j: 0 }, value: [BoolImpl] }
+  //  ],
+  //  t: [
+  //    { character: 't', position: { i: 0, j: 2 }, value: [BoolImpl] },
+  //    { character: 't', position: { i: 2, j: 3 }, value: [BoolImpl] },
+  //    { character: 't', position: { i: 3, j: 4 }, value: [BoolImpl] }
+  //  ]
+  // }
+  const grouped = Object.values(
+    groupBy(Array.from(repeatedChars), "character")
+  ) as Mnemonic[][];
+
+  // A given character cannot be mnemonic of two different options
+  // Example:
+  // Uc0 -> ¬Uc1 ^ ¬Uc2
+  // Uc1 -> ¬Uc0 ^ ¬Uc2
+  // Uc2 -> ¬Uc0 ^ ¬Uc1
+  grouped.forEach((mnemonics: Mnemonic[]) => {
+    mnemonics.forEach((_, index) => {
+      const first = mnemonics[index];
+      const tail = [
+        ...mnemonics.slice(0, index),
+        ...mnemonics.slice(index + 1, mnemonics.length),
+      ];
+      const arrayOption = new solver.ctx.AstVector<BoolZ3>();
+      tail.forEach((nm) => arrayOption.push(solver.ctx.Not(nm.value)));
+      solver.add(solver.ctx.Implies(first.value, solver.ctx.And(arrayOption)));
+    });
+  });
+
+  return solver;
 }
 
+/**
+ * Solve using Z3 API
+ *
+ */
 (async () => {
   let { Context, em } = await init();
   const Z3 = Context("main");
@@ -88,7 +164,7 @@ function addCharacterConstraint(options: Mnemonic[][], solver: Solver<"main">) {
 
   let solver = new Z3.Solver();
   addConstraints(optionList, solver);
-  //addLetterConstraint(optionList, solver);
+  addCharacterConstraint(optionList, solver);
   let start = Date.now();
   console.log("Starting...");
   let check = await solver.check();
