@@ -1,27 +1,39 @@
+/*
+  Fernanda Lucia Andrade Guanoquiza
+  Assignment 1 (SAT) - Static Program Analysis and Constraint Solving
+  2022-10-03
+*/
+
 import { BoolCreation, init } from "z3-solver";
 import type { Solver, Bool as BoolZ3 } from "z3-solver";
-import { groupBy } from "./utils";
 
 /////////////////////////// OPTIONS AND FORMALIZATION ///////////////////////////
 
 // Menu options
-const OPTIONS = ["undo", "copy", "put"];
+const OPTIONS = ["undo", "copy", "mod"];
 
 /* FORMALIZATION
 
-Let's consider options "undo", "copy", "put" which can be written as:
+Let's consider options "undo", "copy", "mod" which can be written as:
+
 Uu1, Un1, Ud1, Uo1
 Uc2, Uo2, Up2, Uy2
-Up3, Uu3, Ut3
+Um3, Uo3, Ud3
 
 1. Each option must have a mnemonic:
 
+∧_{i=1}^{n} ∨_{c ∈ Chars(i)} Uc,i
+
+Example:
 Uu1 v Un1 v Ud1 v Uo1
 Uc2 v Uo2 v Up2 v Uy2
-Up3 v Uu3 v Upt3
+Um3 v Uo3 v Udt3
 
 2. An option cannot have more than one mnemonic:
 
+∧_{i=1}^n ∧_{c∈Chars(i)} (Uc,i ⟹ ∧_{t∈Chars(i)−c} ¬Ut,i)
+
+Example:
 Uu1 -> ¬Un1 ∧ ¬Ud1 ∧ ¬Uo1
 Un1 -> ¬Uu1 ∧ ¬Ud1 ∧ ¬Uo1
 Ud1 -> ¬Uu1 ∧ ¬Un1 ∧ ¬Uo1
@@ -32,18 +44,21 @@ Uo2 -> ¬Uc2 ∧ ¬Uo2 ∧ ¬Uy2
 Up2 -> ¬Uc2 ∧ ¬Uo2 ∧ ¬Uy2
 Uy2 -> ¬Uc2 ∧ ¬Up2 ∧ ¬Up2
 
-Up3 -> ¬Uu3 ∧ ¬Ut3
-Uu3 -> ¬Up3 ∧ ¬Ut3
-Ut3 -> ¬Up3 ∧ ¬Uu3
+Um3 -> ¬Uo3 ∧ ¬Ud3
+Uo3 -> ¬Um3 ∧ ¬Ud3
+Ud3 -> ¬Um3 ∧ ¬Uo3
 
 3. A given character cannot be a mnemonic of two different options:
 
-Uu1 -> ¬Uu2 ∧ ¬Uu3
-Uu2 -> ¬Uu1 ∧ ¬Uu3
-Uu3 -> ¬Uu1 ∧ ¬Uu2
+∧_{i=1}^n ∧_{c∈Chars(i)} (Uc,i⟹∧_{1<j<n ^ i!=j}^n ¬Uc,j)
 
-Up2 -> ¬Up3
-Up3 -> ¬Up2
+Example:
+Ud1 -> ¬Ud3
+Ud3 -> ¬Ud1
+
+Uo1 -> ¬Uo2 ^ ¬Uo3
+Uo2 -> ¬Uo1 ^ ¬Uo3
+Uo3 -> ¬Uo1 ^ ¬Uo2
 
 */
 
@@ -67,9 +82,10 @@ function parseOptions(
   options: string[],
   Bool: BoolCreation<"main">
 ): Mnemonic[][] {
-  return options.map((option: string, positionInMenu: number) => {
-    const charsFromOption = [...option];
-    return charsFromOption.map((character, positionInOption: number) => ({
+  // Remove repeated chars in option
+  const newOptions = options.map((option) => Array.from(new Set([...option])));
+  return newOptions.map((option: string[], positionInMenu: number) => {
+    return option.map((character, positionInOption: number) => ({
       character: character,
       position: { i: positionInMenu, j: positionInOption },
       value: Bool.const(`U${character}${positionInMenu}`),
@@ -89,6 +105,7 @@ function addConstraints(
   options: Mnemonic[][],
   solver: Solver<"main">
 ): Solver<"main"> {
+  // console.log(JSON.stringify(options, null, " "));
   // Each option must have a mnemonic
   // Example:
   // Uu0 v Un0 v Ud0 v Uo0
@@ -99,6 +116,7 @@ function addConstraints(
   });
 
   // An option cannot have more than one mnemonic
+  // Example:
   // Uu0 -> ¬Un0 ^ ¬Ud0 ^ ¬Uo0
   // Un0 -> ¬Uu0 ^ ¬Ud0 ^ ¬Uo0
   // Ud0 -> ¬Uu0 ^ ¬Un0 ^ ¬Uo0
@@ -110,6 +128,7 @@ function addConstraints(
         ...option.slice(0, index),
         ...option.slice(index + 1, option.length),
       ];
+
       const arrayOption = new solver.ctx.AstVector<BoolZ3>();
       tail.forEach((nm) => arrayOption.push(solver.ctx.Not(nm.value)));
       solver.add(solver.ctx.Implies(first.value, solver.ctx.And(arrayOption)));
@@ -133,12 +152,12 @@ function addCharacterConstraint(options: Mnemonic[][], solver: Solver<"main">) {
   // Search for repeated chars in order to defined the prepositions.
   // Example:
   // Set(13) {
-  //  { character: 'c', position: { i: 0, j: 0 }, value: BoolImpl { ptr: 14261556, ctx: [Object] } },
-  //  { character: 'c', position: { i: 1, j: 0 }, value: BoolImpl { ptr: 14261628, ctx: [Object] } },
-  //  { character: 'c', position: { i: 2, j: 0 }, value: BoolImpl { ptr: 14261724, ctx: [Object] } },
-  //  { character: 't', position: { i: 0, j: 2 }, value: BoolImpl { ptr: 14261604, ctx: [Object] } },
-  //  { character: 't', position: { i: 2, j: 3 },  value: BoolImpl { ptr: 14261796, ctx: [Object] } },
-  //  { character: 't', position: { i: 3, j: 4 }, value: BoolImpl { ptr: 14261844, ctx: [Object] } }
+  //   { character: 'd', position: { i: 0, j: 2 }, value: ... },
+  //   { character: 'd', position: { i: 2, j: 2 }, value: ... },
+  //   { character: 'o',  position: { i: 0, j: 3 }, value: ...},
+  //   { character: 'o', position: { i: 1, j: 1 }, value: ... },
+  //   { character: 'o', position: { i: 2, j: 1 },  value: ...
+  //   }
   // }
   let arrayChar: (Mnemonic | null)[] = options.flat();
   const repeatedChars = new Set();
@@ -160,27 +179,26 @@ function addCharacterConstraint(options: Mnemonic[][], solver: Solver<"main">) {
 
   // Group repeated constants by character
   // Example:
-  // {
-  //  c: [
-  //    { character: 'c', position: { i: 0, j: 0 }, value: [BoolImpl] },
-  //    { character: 'c', position: { i: 1, j: 0 }, value: [BoolImpl] },
-  //    { character: 'c', position: { i: 2, j: 0 }, value: [BoolImpl] }
-  //  ],
-  //  t: [
-  //    { character: 't', position: { i: 0, j: 2 }, value: [BoolImpl] },
-  //    { character: 't', position: { i: 2, j: 3 }, value: [BoolImpl] },
-  //    { character: 't', position: { i: 3, j: 4 }, value: [BoolImpl] }
-  //  ]
-  // }
+  // [
+  //   [
+  //     { character: 'd', position: { i: 0, j: 2 }, value: [BoolImpl] },
+  //     { character: 'd', position: { i: 2, j: 2 }, value: [BoolImpl] }
+  //   ],
+  //   [
+  //     { character: 'o', position: { i: 0, j: 3 }, value: [BoolImpl] },
+  //     { character: 'o', position: { i: 1, j: 1 }, value: [BoolImpl] },
+  //     { character: 'o', position: { i: 2, j: 1 }, value: [BoolImpl] }
+  //   ]
+  // ]
   const grouped = Object.values(
     groupBy(Array.from(repeatedChars), "character")
   ) as Mnemonic[][];
 
   // A given character cannot be mnemonic of two different options
   // Example:
-  // Uc0 -> ¬Uc1 ^ ¬Uc2
-  // Uc1 -> ¬Uc0 ^ ¬Uc2
-  // Uc2 -> ¬Uc0 ^ ¬Uc1
+  // Uo1 -> ¬Uo2 ^ ¬Uo3
+  // Uo2 -> ¬Uo1 ^ ¬Uo3
+  // Uo3 -> ¬Uo1 ^ ¬Uo2
   grouped.forEach((mnemonics: Mnemonic[]) => {
     mnemonics.forEach((_, index) => {
       const first = mnemonics[index];
@@ -232,3 +250,23 @@ function addCharacterConstraint(options: Mnemonic[][], solver: Solver<"main">) {
 })().catch((e) => {
   console.error("error", e);
 });
+
+/////////////////////////// UTILS ///////////////////////////
+
+/**
+ * Groups the elements of the calling array according to the string values returned by a
+ * provided testing function.
+ *
+ * @param items - The object list
+ * @param key - testing function
+ * @returns grouped array
+ *
+ */
+export const groupBy = (items, key) =>
+  items.reduce(
+    (result, item) => ({
+      ...result,
+      [item[key]]: [...(result[item[key]] || []), item],
+    }),
+    {}
+  );

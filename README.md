@@ -21,13 +21,13 @@ $$
 2. An option cannot have more than one mnemonic.
 
 $$
-  \land_{i = 1}^n \land_{c \in Chars(i)} (U_{c,i} \implies \land_{t \in \{Chars(i) - U_{c,i}\}} \lnot U_{t,i})
+  \land_{i = 1}^n \land_{c \in Chars(i)} (U_{c,i} \implies \land_{t \in \{Chars(i) - c\}} \lnot U_{t,i})
 $$
 
 3. A given character cannot be a mnemonic of two different options.
 
 $$
-  \land_{i = 1}^n \land_{c \in Chars(i)} (U_{c,i} \implies \land_{j=1}^n \lnot U_{c,j})
+  \land_{i = 1}^n \land_{c \in Chars(i)} (U_{c,i} \implies \land_{1<j<n \land i \neq j} \lnot U_{c,j})
 $$
 
 ## Installation
