@@ -27,7 +27,7 @@ $$
 3. A given character cannot be a mnemonic of two different options.
 
 $$
-  \land_{i = 1}^n \land_{c \in Chars(i)} (U_{c,i} \implies \land_{1<j<n \land i \neq j} \lnot U_{c,j})
+  \land_{i = 1}^n \land_{c \in Chars(i)} (U_{c,i} \implies \land_{1 < j < n \land i \neq j} \lnot U_{c,j})
 $$
 
 ## Installation
