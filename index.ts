@@ -1,11 +1,12 @@
 /*
-  Fernanda Lucia Andrade Guanoquiza
+  Fernanda Andrade Guanoquiza
   Assignment 1 (SAT) - Static Program Analysis and Constraint Solving
   2022-10-03
 */
 
 import { BoolCreation, init } from "z3-solver";
 import type { Solver, Bool as BoolZ3 } from "z3-solver";
+import { groupBy } from "./utils";
 
 /////////////////////////// OPTIONS AND FORMALIZATION ///////////////////////////
 
@@ -50,7 +51,7 @@ Ud3 -> ¬Um3 ∧ ¬Uo3
 
 3. A given character cannot be a mnemonic of two different options:
 
-∧_{i=1}^n ∧_{c∈Chars(i)} (Uc,i⟹∧_{1≤j≤n ∧ i≠j c∈Chars(j)}^n ¬Uc,j)
+∧_{i=1}^n ∧_{c∈Chars(i)} (Uc,i⟹∧_{∧1≤j≤n ∧ i≠j c∈Chars(j)}^n ¬Uc,j)
 
 Example:
 Ud1 -> ¬Ud3
@@ -141,7 +142,6 @@ function addConstraints(
  * Add character constraint: Add mnemonic keyboard constraint: A given character cannot be a mnemonic of
  * two different options.
  *
- * @param optionsString - The array of options as strings
  * @param options - The array of boolean constants. Example: [[Uu0, Un0, Ud0, Uo0], [Uc1, Uo1, Up1, Uy1]]
  * @param solver - The solver structure from Z3
  * @returns The solver structure from Z3
@@ -249,23 +249,3 @@ function addCharacterConstraint(options: Mnemonic[][], solver: Solver<"main">) {
 })().catch((e) => {
   console.error("error", e);
 });
-
-/////////////////////////// UTILS ///////////////////////////
-
-/**
- * Groups the elements of the calling array according to the string values returned by a
- * provided testing function.
- *
- * @param items - The object list
- * @param key - testing function
- * @returns grouped array
- *
- */
-export const groupBy = (items, key) =>
-  items.reduce(
-    (result, item) => ({
-      ...result,
-      [item[key]]: [...(result[item[key]] || []), item],
-    }),
-    {}
-  );
