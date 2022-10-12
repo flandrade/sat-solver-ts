@@ -50,7 +50,7 @@ Ud3 -> ¬Um3 ∧ ¬Uo3
 
 3. A given character cannot be a mnemonic of two different options:
 
-∧_{i=1}^n ∧_{c∈Chars(i)} (Uc,i⟹∧_{1<j<n ^ i!=j}^n ¬Uc,j)
+∧_{i=1}^n ∧_{c∈Chars(i)} (Uc,i⟹∧_{1≤j≤n ∧ i≠j c∈Chars(j)}^n ¬Uc,j)
 
 Example:
 Ud1 -> ¬Ud3
@@ -105,7 +105,6 @@ function addConstraints(
   options: Mnemonic[][],
   solver: Solver<"main">
 ): Solver<"main"> {
-  // console.log(JSON.stringify(options, null, " "));
   // Each option must have a mnemonic
   // Example:
   // Uu0 v Un0 v Ud0 v Uo0
