@@ -8,26 +8,121 @@ has to meet the following constraints:
 2. An option cannot have more than one mnemonic.
 3. A given character cannot be a mnemonic of two different options.
 
-The problem can be reduced to a SAT. This implementation uses Z3's bindings in TypeScript.
+The problem can be reduced to a SAT. This repository includes the formalization and the implementation. It uses Z3's bindings in TypeScript.
 
 ## Formalization
 
-1. Each option must have a mnemonic.
+### Problem
+
+Menu with $n$ options such that $i \in \{1,...,n\}$. We denote the set of characters
+$Chars(i)$ that belong to the $i$-th option. Therefore, our problem can be defined as:
+
+$$
+\{U_{c,i} | 1 \leq i \leq n, c \in Chars(i)\}
+$$
+
+Here, $U_{c,i}$ is true if the character c is the mnemonic of the i -th option.
+
+### Formalization and examples
+
+Let's consider options "undo", "copy", "mod" which can be written as:
+
+```
+Uu1, Un1, Ud1, Uo1
+Uc2, Uo2, Up2, Uy2
+Um3, Uo3, Ud3
+```
+
+#### Each option must have a mnemonic.
 
 $$
   \land_{i = 1}^n \lor_{c \in Chars(i)} U_{c,i}
 $$
 
-2. An option cannot have more than one mnemonic.
+Formalization according to our example:
 
 $$
-  \land_{i = 1}^n \land_{c \in Chars(i)} (U_{c,i} \implies \land_{t \in \{Chars(i) - c\}} \lnot U_{t,i})
+U_{u,1} \lor U_{n,1} \lor U_{d,1} \lor U_{o,1}
 $$
 
-3. A given character cannot be a mnemonic of two different options.
+$$
+U_{c,2} \lor U_{o,2} \lor U_{p,2} \lor U_{y,2}
+$$
 
 $$
-  \land_{i = 1}^n \land_{c \in Chars(i)} (U_{c,i} \implies \land_{1\leq j \leq n \land i \neq j c \in Chars(j)} \lnot U_{c,j})
+U_{m,3} \lor U_{o,3} \lor U\_{d,3}
+$$
+
+#### An option cannot have more than one mnemonic.
+
+$$
+\land_{i = 1}^n \land_{c \in Chars(i)} (U_{c,i} \implies \land_{t \in \{Chars(i) - c\}} \lnot U\_{t,i})
+$$
+
+Formalization according to our example:
+
+$$
+U_{u,1} \land U_{n,1} \land U_{d,1} \land U_{o,1} \\
+$$
+
+$$
+U_{c,2} \land U_{o,2} \land U_{p,2} \land U_{y,2} \\
+$$
+
+$$
+U_{m,3} \land U_{o,3} \land U\_{d,3} \\
+$$
+
+#### A given character cannot be a mnemonic of two different options.
+
+$$
+\land_{i = 1}^n \land_{c \in Chars(i)} (U\_{c,i} \implies \land_{1\leq j \leq n \land i \neq j c \in Chars(j)} \lnot U\_{c,j})
+$$
+
+Formalization according to our example:
+
+$$
+U_{u,1} \implies \lnot U_{n,1} \land \lnot U_{d,1} \land \lnot U_{o,1}
+$$
+
+$$
+U_{n,1} \implies \lnot U_{u,1} \land \lnot U_{d,1} \land \lnot U_{o,1}
+$$
+
+$$
+U_{d,1} \implies \lnot U_{u,1} \land \lnot U_{n,1} \land \lnot U_{o,1}
+$$
+
+$$
+U_{o,1} \implies \lnot U_{u,1} \land \lnot U_{n,1} \land \lnot U_{d,1}
+$$
+
+$$
+U_{c,2} \implies \lnot U_{o,2} \land \lnot U_{p,2} \land \lnot U_{y,2}
+$$
+
+$$
+U_{o,2} \implies \lnot U_{c,2} \land \lnot U_{o,2} \land \lnot U_{y,2}
+$$
+
+$$
+U_{p,2} \implies \lnot U_{c,2} \land \lnot U_{o,2} \land \lnot U_{y,2}
+$$
+
+$$
+U_{y,2} \implies \lnot U_{c,2} \land \lnot U_{p,2} \land \lnot U_{p,2}
+$$
+
+$$
+U_{m,3} \implies \lnot U_{o,3} \land \lnot U_{d,3}
+$$
+
+$$
+U_{o,3} \implies \lnot U_{m,3} \land \lnot U_{d,3}
+$$
+
+$$
+U_{d,3} \implies \lnot U_{m,3} \land \lnot U_{o,3}
 $$
 
 ## Installation

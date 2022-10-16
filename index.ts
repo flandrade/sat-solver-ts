@@ -1,5 +1,5 @@
 /*
-  Fernanda Andrade Guanoquiza
+  Fernanda Andrade
   Assignment 1 (SAT) - Static Program Analysis and Constraint Solving
   2022-10-03
 */
@@ -8,60 +8,8 @@ import { BoolCreation, init } from "z3-solver";
 import type { Solver, Bool as BoolZ3 } from "z3-solver";
 import { groupBy } from "./utils";
 
-/////////////////////////// OPTIONS AND FORMALIZATION ///////////////////////////
-
 // Menu options
 const OPTIONS = ["undo", "copy", "mod"];
-
-/* FORMALIZATION
-
-Let's consider options "undo", "copy", "mod" which can be written as:
-
-Uu1, Un1, Ud1, Uo1
-Uc2, Uo2, Up2, Uy2
-Um3, Uo3, Ud3
-
-1. Each option must have a mnemonic:
-
-∧_{i=1}^{n} ∨_{c ∈ Chars(i)} Uc,i
-
-Example:
-Uu1 v Un1 v Ud1 v Uo1
-Uc2 v Uo2 v Up2 v Uy2
-Um3 v Uo3 v Udt3
-
-2. An option cannot have more than one mnemonic:
-
-∧_{i=1}^n ∧_{c∈Chars(i)} (Uc,i ⟹ ∧_{t∈Chars(i)−c} ¬Ut,i)
-
-Example:
-Uu1 -> ¬Un1 ∧ ¬Ud1 ∧ ¬Uo1
-Un1 -> ¬Uu1 ∧ ¬Ud1 ∧ ¬Uo1
-Ud1 -> ¬Uu1 ∧ ¬Un1 ∧ ¬Uo1
-Uo1 -> ¬Uu1 ∧ ¬Un1 ∧ ¬Ud1
-
-Uc2 -> ¬Uo2 ∧ ¬Up2 ∧ ¬Uy2
-Uo2 -> ¬Uc2 ∧ ¬Uo2 ∧ ¬Uy2
-Up2 -> ¬Uc2 ∧ ¬Uo2 ∧ ¬Uy2
-Uy2 -> ¬Uc2 ∧ ¬Up2 ∧ ¬Up2
-
-Um3 -> ¬Uo3 ∧ ¬Ud3
-Uo3 -> ¬Um3 ∧ ¬Ud3
-Ud3 -> ¬Um3 ∧ ¬Uo3
-
-3. A given character cannot be a mnemonic of two different options:
-
-∧_{i=1}^n ∧_{c∈Chars(i)} (Uc,i⟹∧_{∧1≤j≤n ∧ i≠j c∈Chars(j)}^n ¬Uc,j)
-
-Example:
-Ud1 -> ¬Ud3
-Ud3 -> ¬Ud1
-
-Uo1 -> ¬Uo2 ^ ¬Uo3
-Uo2 -> ¬Uo1 ^ ¬Uo3
-Uo3 -> ¬Uo1 ^ ¬Uo2
-
-*/
 
 ///////////////////////////////// IMPLEMENTATION ////////////////////////////////
 
