@@ -14,14 +14,32 @@ The problem can be reduced to a SAT. This repository includes the formalization 
 
 ### Problem
 
-Menu with $n$ options such that $i \in \{1,...,n\}$. We denote the set of characters
-$Chars(i)$ that belong to the $i$-th option. Therefore, our problem can be defined as:
+## Formalizing the Problem
+
+Each option `i` in the menu has a set of characters associated with it, a set called $Chars(i)$. For
+instance, if option `1` is "Undo", $Chars(1)$ might be the set of characters $\{U, n, d, o\}$.
+
+The task is to determine whether a particular character `c` is the mnemonic for a specific `i`.
+
+The menu with $n$ options such that $i \in \{1,...,n\}$. We denote the set of characters $Chars(i)$
+that belong to the $i$-th option. Therefore, our problem can be defined as:
 
 $$
 \{U_{c,i} | 1 \leq i \leq n, c \in Chars(i)\}
 $$
 
 Here, $U_{c,i}$ is true if the character c is the mnemonic of the i -th option.
+
+```mermaid
+graph TD
+    A[Menu Options] --> B["Option 1: Chars(1) = {U, n, d, o}"]
+    A --> C["Option 2: Chars(2) = {C, o, p, y}"]
+    A --> D["Option 3: Chars(3) = {C, o, s,t}"]
+
+    B --> |Mnemonic: U| E["U(S,1) = True"]
+    C --> |Mnemonic: Y| F["U(O,2) = True"]
+    D --> |Mnemonic: T| G["U(E,4) = True"]
+```
 
 ### Formalization and examples
 
@@ -164,8 +182,10 @@ Problem was determined to be sat in 252 ms
 ---- Result: option [mnemonic] ----
 cut u
 copy y
-cost t
+mod d
 ```
+
+## Implementation in TypeScript
 
 ## Acknowledgment
 
