@@ -12,9 +12,7 @@ The problem can be reduced to a SAT. This repository includes the formalization 
 
 ## Formalization
 
-### Problem
-
-## Formalizing the Problem
+### Formalizing the problem
 
 Each option `i` in the menu has a set of characters associated with it, a set called $Chars(i)$. For
 instance, if option `1` is "Undo", $Chars(1)$ might be the set of characters $\{U, n, d, o\}$.
@@ -30,18 +28,7 @@ $$
 
 Here, $U_{c,i}$ is true if the character c is the mnemonic of the i -th option.
 
-```mermaid
-graph TD
-    A[Menu Options] --> B["Option 1: Chars(1) = {U, n, d, o}"]
-    A --> C["Option 2: Chars(2) = {C, o, p, y}"]
-    A --> D["Option 3: Chars(3) = {C, o, s,t}"]
-
-    B --> |Mnemonic: U| E["U(S,1) = True"]
-    C --> |Mnemonic: Y| F["U(O,2) = True"]
-    D --> |Mnemonic: T| G["U(E,4) = True"]
-```
-
-### Formalization and examples
+### Formalization with examples
 
 Let's consider options "undo", "copy", "mod" which can be written as:
 
@@ -51,7 +38,20 @@ Uc2, Uo2, Up2, Uy2
 Um3, Uo3, Ud3
 ```
 
-#### Each option must have a mnemonic.
+```mermaid
+graph TD
+    A[Menu Options] --> B["Option 1: Chars(1) = {u, n, d, o}"]
+    A --> C["Option 2: Chars(2) = {c, o, p, y}"]
+    A --> D["Option 3: Chars(3) = {m, o, d}"]
+
+    B --> |Mnemonic: U| E["U(u,1) = True"]
+    C --> |Mnemonic: Y| F["U(y,2) = True"]
+    D --> |Mnemonic: D| G["U(d,3) = True"]
+```
+
+#### Each option must have a mnemonic
+
+This constraint ensures that every option has at least one character assigned as its mnemonic. Formally, for each option `i`, at least one of the Boolean variables $U_{c,i}$ must be `true`:
 
 $$
   \land_{i = 1}^n \lor_{c \in Chars(i)} U_{c,i}
@@ -71,7 +71,10 @@ $$
 U_{m,3} \lor U_{o,3} \lor U\_{d,3}
 $$
 
-#### An option cannot have more than one mnemonic.
+#### An option cannot have more than one mnemonic
+
+If a character is chosen, no other character for the same option can be a mnemonic. Formally, for each option `i` and each character `c` in `Chars(i)`, if $U_{c,i}$ is `true`, then all
+other characters `t` in `Chars(i)` must have $U_{t,i}$ set to `false`:
 
 $$
 \land_{i = 1}^n \land_{c \in Chars(i)} (U_{c,i} \implies \land_{t \in \{Chars(i) - c\}} \lnot U\_{t,i})
@@ -91,7 +94,10 @@ $$
 U_{m,3} \land U_{o,3} \land U\_{d,3} \\
 $$
 
-#### A given character cannot be a mnemonic of two different options.
+#### A given character cannot be a mnemonic of two different options
+
+This constraint ensures that no single character is used as the mnemonic for more than one option. Formally, for each option `i` and each character `c` in `Chars(i)`, if $U_{c,i}$ is `true`, then `c`
+cannot be the mnemonic for any other option `j` where `j ≠ i`:
 
 $$
 \land_{i = 1}^n \land_{c \in Chars(i)} (U\_{c,i} \implies \land_{1\leq j \leq n \land i \neq j c \in Chars(j)} \lnot U\_{c,j})
@@ -186,6 +192,9 @@ mod d
 ```
 
 ## Implementation in TypeScript
+
+For more details on the problem and the implementation, visit the
+[blogpost](https://ferandrade.com/blog/sat-problem/).
 
 ## Acknowledgment
 
